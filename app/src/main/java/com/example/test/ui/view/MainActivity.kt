@@ -19,6 +19,7 @@ import com.example.test.ui.viewModel.MateriaViewModel
 import com.example.test.ui.viewModel.MateriaViewModelFactory
 import com.example.test.ui.viewModel.TareaViewModel
 import com.example.test.ui.viewModel.TareaViewModelFactory
+import com.google.android.material.floatingactionbutton.FloatingActionButton // IMPORTANTE: Importar esto
 
 class MainActivity : AppCompatActivity() {
 
@@ -43,13 +44,21 @@ class MainActivity : AppCompatActivity() {
         recyclerTareas.adapter = tareaAdapter
         recyclerTareas.layoutManager = LinearLayoutManager(this)
 
-        // --- Elementos UI ---
+        // --- Elementos UI (AQUÍ ESTÁN LOS CAMBIOS CLAVE) ---
         val search = findViewById<EditText>(R.id.barra_busqueda)
+
+        // 1. Este botón ahora es un FloatingActionButton
+        val addSubject = findViewById<FloatingActionButton>(R.id.redireccionarMateria)
+
+        // 2. El botón de agregar tarea sigue siendo un Button (dentro de la tarjeta)
         val addTask = findViewById<Button>(R.id.redireccionarTarea)
-        val addSubject = findViewById<Button>(R.id.redireccionarMateria)
+
         val lupa = findViewById<ImageView>(R.id.boton_buscar)
-        val todasMaterias = findViewById<Button>(R.id.buttonVerTodo)
-        val todasTareas = findViewById<Button>(R.id.buttonVerTodasTareas)
+
+        // 3. Estos dos ahora son TextView (los textos azules "Ver todo")
+        val todasMaterias = findViewById<TextView>(R.id.buttonVerTodo)
+        val todasTareas = findViewById<TextView>(R.id.buttonVerTodasTareas)
+
         val home = findViewById<Button>(R.id.home)
         val botonCompletados = findViewById<Button>(R.id.ButtonCompletados)
         val botonPendientes = findViewById<Button>(R.id.ButtonPendientes)
@@ -155,6 +164,7 @@ class MainActivity : AppCompatActivity() {
             startActivity(Intent(this, AddTaskActivity::class.java))
         }
 
+        // El listener sigue igual, pero ahora funciona sobre el botón flotante
         addSubject.setOnClickListener {
             startActivity(Intent(this, AddSubjectActivity::class.java))
         }
