@@ -1,0 +1,175 @@
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#FFFFFF"
+    android:padding="16dp">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:gravity="center_horizontal">
+
+        <!-- Nombre de la tarea -->
+        <TextView
+            android:id="@+id/nombreTarea"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Investigación teoría de la unidad 2"
+            android:textSize="22sp"
+            android:textStyle="bold"
+            android:textColor="#000000"
+            android:paddingBottom="8dp" />
+
+        <!-- Fecha de entrega -->
+        <TextView
+            android:id="@+id/fechaEntrega"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Entrega: 25/09/2025"
+            android:textColor="#555555"
+            android:textSize="16sp"
+            android:gravity="end"
+            android:paddingBottom="8dp" />
+
+        <!-- Tarjeta de descripción -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="#E6E0FF"
+            android:orientation="vertical"
+            android:padding="16dp"
+            android:layout_marginTop="8dp"
+            android:layout_marginBottom="16dp"
+            android:layout_marginHorizontal="4dp"
+            android:clipToOutline="true"
+            android:elevation="2dp"
+            android:radius="16dp">
+
+            <TextView
+                android:id="@+id/descripcion"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Descripción de la tarea"
+                android:textColor="#444444"
+                android:textSize="16sp"
+                android:paddingBottom="12dp" />
+
+            <TextView
+                android:id="@+id/nombreMateria"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Materia: Administración de base de datos"
+                android:textColor="#333333"
+                android:textStyle="bold"
+                android:textSize="16sp" />
+        </LinearLayout>
+
+        <!-- NUEVA SECCIÓN: Entrega de la tarea -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="#E6E0FF"
+            android:orientation="vertical"
+            android:padding="16dp"
+            android:layout_marginTop="8dp"
+            android:layout_marginBottom="16dp"
+            android:clipToOutline="true"
+            android:elevation="2dp"
+            android:radius="16dp">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Entrega de la tarea"
+                android:textStyle="bold"
+                android:textSize="18sp"
+                android:textColor="#000000"
+                android:paddingBottom="8dp" />
+
+            <RadioGroup
+                android:id="@+id/grupoEntrega"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_horizontal">
+
+                <RadioButton
+                    android:id="@+id/tareaEntregada"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Entregada"
+                    android:textColor="#333333"
+                    android:paddingEnd="24dp" />
+
+                <RadioButton
+                    android:id="@+id/tareaNoEntregada"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="No entregada"
+                    android:textColor="#333333" />
+
+            </RadioGroup>
+        </LinearLayout>
+
+        <!-- Estado de la tarea -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="#E6E0FF"
+            android:orientation="vertical"
+            android:padding="16dp"
+            android:layout_marginTop="8dp"
+            android:layout_marginBottom="16dp"
+            android:clipToOutline="true"
+            android:elevation="2dp"
+            android:radius="16dp">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Estado de la tarea"
+                android:textStyle="bold"
+                android:textSize="18sp"
+                android:textColor="#000000"
+                android:paddingBottom="8dp" />
+
+            <RadioGroup
+                android:id="@+id/grupoEstado"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical">
+
+                <RadioButton
+                    android:id="@+id/radioTardio"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Tardío"
+                    android:textColor="#333333" />
+
+                <RadioButton
+                    android:id="@+id/radioProceso"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="En proceso"
+                    android:textColor="#333333" />
+
+                <RadioButton
+                    android:id="@+id/radioCompletado"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Completado"
+                    android:textColor="#333333" />
+
+            </RadioGroup>
+        </LinearLayout>
+
+        <Button
+            android:id="@+id/botonEditar"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Editar Tarea" />
+
+    </LinearLayout>
+
+</ScrollView>

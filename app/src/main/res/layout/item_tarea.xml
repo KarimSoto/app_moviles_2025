@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.cardview.widget.CardView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/cardTarea"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_margin="8dp"
+    app:cardCornerRadius="16dp"
+    app:cardElevation="4dp"
+    android:backgroundTint="#DAD6FF"
+    android:clickable="true"
+    android:focusable="true">
+
+    <!-- Contenedor general -->
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:padding="12dp">
+
+        <!-- Franja verde lateral -->
+        <View
+            android:id="@+id/colorBar"
+            android:layout_width="8dp"
+            android:layout_height="match_parent"
+            android:layout_alignParentStart="true"
+            android:background="#26E836"
+            android:layout_marginEnd="8dp"
+            android:layout_centerVertical="true"
+            android:layout_alignTop="@id/contentLayout"
+            android:layout_alignBottom="@id/contentLayout" />
+
+        <!-- Contenido textual -->
+        <LinearLayout
+            android:id="@+id/contentLayout"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_toEndOf="@id/colorBar"
+            android:layout_marginStart="12dp"
+            android:orientation="vertical">
+
+            <TextView
+                android:id="@+id/nombreTarea"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Investigación teoría de la unidad 2"
+                android:textSize="18sp"
+                android:textStyle="bold"
+                android:textColor="@android:color/black"
+                android:layout_marginEnd="40dp" />
+
+            <TextView
+                android:id="@+id/fechaEntrega"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Entrega: 25/09/2025"
+                android:textSize="14sp"
+                android:textColor="@android:color/black"
+                android:layout_marginTop="4dp" />
+
+            <TextView
+                android:id="@+id/materiaNombre"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Materia: Administración de base de datos"
+                android:textSize="14sp"
+                android:textColor="@android:color/black"
+                android:layout_marginTop="2dp"
+                android:layout_marginBottom="4dp" />
+
+        </LinearLayout>
+
+
+
+    </RelativeLayout>
+
+</androidx.cardview.widget.CardView>
