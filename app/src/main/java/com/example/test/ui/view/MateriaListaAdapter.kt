@@ -3,26 +3,24 @@ package com.example.test.ui.view
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.ImageView
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import com.example.test.R
 import com.example.test.data.model.Materia
 
-// 1. Modificamos el constructor para recibir la función 'onItemClick'
-class MateriaAdapter(
+class MateriaListaAdapter(
     private var materias: List<Materia>,
-    private val onItemClick: (Materia) -> Unit // Esta es la función de "aviso"
-) : RecyclerView.Adapter<MateriaAdapter.MateriaViewHolder>() {
+    private val onItemClick: (Materia) -> Unit
+) : RecyclerView.Adapter<MateriaListaAdapter.MateriaViewHolder>() {
 
     inner class MateriaViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         val nombreMateria: TextView = itemView.findViewById(R.id.nombreMateria)
-        val imagenMateria: ImageView = itemView.findViewById(R.id.imageMateria)
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): MateriaViewHolder {
+        // Aquí cargamos el NUEVO diseño de lista horizontal
         val view = LayoutInflater.from(parent.context)
-            .inflate(R.layout.item_materia, parent, false)
+            .inflate(R.layout.item_materia_lista, parent, false)
         return MateriaViewHolder(view)
     }
 
@@ -30,10 +28,7 @@ class MateriaAdapter(
         val materia = materias[position]
         holder.nombreMateria.text = materia.nombreMateria
 
-        // 2. Listener de clic simplificado
         holder.itemView.setOnClickListener {
-            // En lugar de lanzar el Intent aquí, ejecutamos la función que nos pasó MainActivity.
-            // Esto permite que MainActivity actualice la fecha de uso antes de cambiar de pantalla.
             onItemClick(materia)
         }
     }

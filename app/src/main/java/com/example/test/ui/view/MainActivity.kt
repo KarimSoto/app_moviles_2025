@@ -1,7 +1,7 @@
 package com.example.test.ui.view
 
-import android.os.Bundle
 import android.content.Intent
+import android.os.Bundle
 import android.widget.*
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
@@ -19,7 +19,7 @@ import com.example.test.ui.viewModel.MateriaViewModel
 import com.example.test.ui.viewModel.MateriaViewModelFactory
 import com.example.test.ui.viewModel.TareaViewModel
 import com.example.test.ui.viewModel.TareaViewModelFactory
-import com.google.android.material.floatingactionbutton.FloatingActionButton // IMPORTANTE: Importar esto
+import com.google.android.material.floatingactionbutton.FloatingActionButton
 
 class MainActivity : AppCompatActivity() {
 
@@ -33,37 +33,7 @@ class MainActivity : AppCompatActivity() {
         enableEdgeToEdge()
         setContentView(R.layout.activity_main)
 
-        // --- Configuración de RecyclerViews ---
-        val recyclerMaterias = findViewById<RecyclerView>(R.id.recyclerMaterias)
-        materiaAdapter = MateriaAdapter(emptyList())
-        recyclerMaterias.adapter = materiaAdapter
-        recyclerMaterias.layoutManager = LinearLayoutManager(this)
-
-        val recyclerTareas = findViewById<RecyclerView>(R.id.recyclerTareas)
-        tareaAdapter = TareaAdapter(emptyList())
-        recyclerTareas.adapter = tareaAdapter
-        recyclerTareas.layoutManager = LinearLayoutManager(this)
-
-        // --- Elementos UI (AQUÍ ESTÁN LOS CAMBIOS CLAVE) ---
-        val search = findViewById<EditText>(R.id.barra_busqueda)
-
-        // 1. Este botón ahora es un FloatingActionButton
-        val addSubject = findViewById<FloatingActionButton>(R.id.redireccionarMateria)
-
-        // 2. El botón de agregar tarea sigue siendo un Button (dentro de la tarjeta)
-        val addTask = findViewById<Button>(R.id.redireccionarTarea)
-
-        val lupa = findViewById<ImageView>(R.id.boton_buscar)
-
-        // 3. Estos dos ahora son TextView (los textos azules "Ver todo")
-        val todasMaterias = findViewById<TextView>(R.id.buttonVerTodo)
-        val todasTareas = findViewById<TextView>(R.id.buttonVerTodasTareas)
-
-        val home = findViewById<Button>(R.id.home)
-        val botonCompletados = findViewById<Button>(R.id.ButtonCompletados)
-        val botonPendientes = findViewById<Button>(R.id.ButtonPendientes)
-
-        // --- DB y ViewModels ---
+        // --- DB y ViewModels (Inicializamos esto antes para usarlo en el adaptador) ---
         val db = DatabaseProvider.getDatabase(this)
 
         val tareaDao = db.tareaDao()
@@ -76,8 +46,51 @@ class MainActivity : AppCompatActivity() {
         val materiaFactory = MateriaViewModelFactory(materiaRepository)
         materiaViewModel = ViewModelProvider(this, materiaFactory).get(MateriaViewModel::class.java)
 
-        // --- Observadores iniciales ---
-        materiaViewModel.materias.observe(this) { lista ->
+
+        // --- Configuración de RecyclerViews ---
+        val recyclerMaterias = findViewById<RecyclerView>(R.id.recyclerMaterias)
+
+        // CAMBIO PRINCIPAL AQUÍ: Pasamos la función lambda al adaptador
+        materiaAdapter = MateriaAdapter(emptyList()) { materiaClicked ->
+            // 1. Avisamos al ViewModel que se usó esta materia (para actualizar la fecha)
+            materiaViewModel.updateMateriaInteraction(materiaClicked)
+
+            // 2. Navegamos a la pantalla de detalle
+            val intent = Intent(this, DetalleMateriaActivity::class.java)
+            intent.putExtra("nombreMateria", materiaClicked.nombreMateria)
+            intent.putExtra("id", materiaClicked.id)
+            startActivity(intent)
+        }
+
+        recyclerMaterias.adapter = materiaAdapter
+
+        // Layout Manager de Cuadrícula (2 columnas)
+        recyclerMaterias.layoutManager = androidx.recyclerview.widget.GridLayoutManager(this, 2)
+
+        // Desactivar scroll anidado
+        recyclerMaterias.isNestedScrollingEnabled = false
+
+
+        val recyclerTareas = findViewById<RecyclerView>(R.id.recyclerTareas)
+        tareaAdapter = TareaAdapter(emptyList())
+        recyclerTareas.adapter = tareaAdapter
+        recyclerTareas.layoutManager = LinearLayoutManager(this)
+
+        // --- Elementos UI ---
+        val search = findViewById<EditText>(R.id.barra_busqueda)
+        val addSubject = findViewById<FloatingActionButton>(R.id.redireccionarMateria)
+        val addTask = findViewById<Button>(R.id.redireccionarTarea)
+        val lupa = findViewById<ImageView>(R.id.boton_buscar)
+        val todasMaterias = findViewById<TextView>(R.id.buttonVerTodo)
+        val todasTareas = findViewById<TextView>(R.id.buttonVerTodasTareas)
+        val home = findViewById<Button>(R.id.home)
+        val botonCompletados = findViewById<Button>(R.id.ButtonCompletados)
+        val botonPendientes = findViewById<Button>(R.id.ButtonPendientes)
+
+
+        // --- Observadores ---
+        // Observamos 'recentMaterias' para que salgan las 4 últimas/más usadas
+        materiaViewModel.recentMaterias.observe(this) { lista ->
             materiaAdapter.updateList(lista)
         }
 
@@ -128,7 +141,8 @@ class MainActivity : AppCompatActivity() {
                     combinarTareasConMateria(lista)
                 }
             } else {
-                materiaViewModel.materias.observe(this) { lista ->
+                // Al borrar búsqueda, volver a mostrar las recientes
+                materiaViewModel.recentMaterias.observe(this) { lista ->
                     materiaAdapter.updateList(lista)
                 }
                 tareaViewModel.tareas.observe(this) { lista ->
@@ -142,7 +156,8 @@ class MainActivity : AppCompatActivity() {
             search.text.clear()
             search.clearFocus()
 
-            materiaViewModel.materias.observe(this) { lista ->
+            // Home muestra las recientes
+            materiaViewModel.recentMaterias.observe(this) { lista ->
                 materiaAdapter.updateList(lista)
             }
 
@@ -164,7 +179,6 @@ class MainActivity : AppCompatActivity() {
             startActivity(Intent(this, AddTaskActivity::class.java))
         }
 
-        // El listener sigue igual, pero ahora funciona sobre el botón flotante
         addSubject.setOnClickListener {
             startActivity(Intent(this, AddSubjectActivity::class.java))
         }

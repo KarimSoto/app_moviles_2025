@@ -9,7 +9,7 @@ import com.example.test.data.model.Materia
 
 @Database(
     entities = [Tarea::class, Materia::class ],
-    version = 1
+    version = 2
 )
 abstract class AppDatabase : RoomDatabase(){
     abstract fun tareaDao() : TareaDao

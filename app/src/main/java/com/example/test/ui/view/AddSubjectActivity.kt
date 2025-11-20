@@ -13,7 +13,7 @@ import com.example.test.data.model.Materia
 import com.example.test.data.repository.MateriaRepository
 import com.example.test.ui.viewModel.MateriaViewModel
 import com.example.test.ui.viewModel.MateriaViewModelFactory
-import com.google.android.material.floatingactionbutton.FloatingActionButton // Importante para el botón de flecha
+import com.google.android.material.floatingactionbutton.FloatingActionButton
 
 class AddSubjectActivity : AppCompatActivity() {
 
@@ -24,36 +24,37 @@ class AddSubjectActivity : AppCompatActivity() {
         enableEdgeToEdge()
         setContentView(R.layout.activity_add_subject)
 
-        // 1. Referencias a los NUEVOS IDs del XML
-        val inputNombreMateria = findViewById<EditText>(R.id.editTextNombreMateria) // Antes R.id.materia
-        val botonRegistrar = findViewById<Button>(R.id.buttonCrearMateria)       // Antes R.id.enviar
-        val botonRegresar = findViewById<FloatingActionButton>(R.id.buttonRegresar) // Nuevo botón de flecha
+        // Referencias a los IDs
+        val inputNombreMateria = findViewById<EditText>(R.id.editTextNombreMateria)
+        val botonRegistrar = findViewById<Button>(R.id.buttonCrearMateria)
+        val botonRegresar = findViewById<FloatingActionButton>(R.id.buttonRegresar)
 
-        // Ajuste de bordes (EdgeToEdge)
+        // Ajuste de bordes
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main)) { v, insets ->
             val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom)
             insets
         }
 
-        // 2. Configuración de Base de Datos y ViewModel (Igual que antes)
+        // Configuración ViewModel
         val db = DatabaseProvider.getDatabase(this)
         val materiaDao = db.materiaDao()
         val materiaRepository = MateriaRepository(materiaDao)
         val materiaFactory = MateriaViewModelFactory(materiaRepository)
         materiaViewModel = ViewModelProvider(this, materiaFactory).get(MateriaViewModel::class.java)
 
-        // 3. Observador para verificar si se guardó correctamente
+        // --- OBSERVADOR DE ÉXITO ---
+        // Aquí es donde se "escucha" si la operación funcionó para mostrar el mensaje y salir
         materiaViewModel.insercionExitosa.observe(this) { exito ->
             if (exito) {
-                Toast.makeText(this, "Materia registrada correctamente", Toast.LENGTH_SHORT).show()
-                finish() // Cierra esta pantalla y regresa automáticamente al menú principal
+                Toast.makeText(this, "Materia registrada con éxito", Toast.LENGTH_SHORT).show()
+                finish() // Cierra la actividad y regresa a la pantalla principal
             } else {
-                Toast.makeText(this, "Error al insertar la materia", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this, "Error al guardar la materia", Toast.LENGTH_SHORT).show()
             }
         }
 
-        // 4. Acción del botón "Registrar materia"
+        // --- BOTÓN REGISTRAR ---
         botonRegistrar.setOnClickListener {
             val tituloMateria = inputNombreMateria.text.toString().trim()
 
@@ -62,15 +63,19 @@ class AddSubjectActivity : AppCompatActivity() {
                     id = 0,
                     nombreMateria = tituloMateria
                 )
-                materiaViewModel.agregarMateria(nuevaMateria)
+
+                // ¡CORRECCIÓN AQUÍ! Usamos insertMateria en lugar de agregarMateria
+                // Esta función sí dispara el aviso 'insercionExitosa'
+                materiaViewModel.insertMateria(nuevaMateria)
+
             } else {
-                Toast.makeText(this, "El nombre no puede estar vacío", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this, "Por favor escribe un nombre", Toast.LENGTH_SHORT).show()
             }
         }
 
-        // 5. Acción del botón "Regresar" (Flecha izquierda)
+        // --- BOTÓN REGRESAR ---
         botonRegresar.setOnClickListener {
-            finish() // Cierra la actividad y vuelve atrás
+            finish()
         }
     }
 }

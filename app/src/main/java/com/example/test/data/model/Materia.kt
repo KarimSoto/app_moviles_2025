@@ -8,5 +8,6 @@ import androidx.room.PrimaryKey
 @Entity(tableName = "materias")
 data class Materia(
     @PrimaryKey(autoGenerate=true) val id: Int = 0,
-    val nombreMateria: String
+    val nombreMateria: String,
+    val ultimaInteraccion: Long = System.currentTimeMillis() // ¡Nuevo campo aquí!
 )
