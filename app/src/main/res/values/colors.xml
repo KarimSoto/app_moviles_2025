@@ -4,4 +4,5 @@
     <color name="white">#FFFFFFFF</color>
 
     <color name="primary_blue">#303F9F</color>
-</resources>
+
+    <color name="status_completed">#4CAF50</color> <color name="status_pending">#FF9800</color>   <color name="status_late">#F44336</color>      </resources>

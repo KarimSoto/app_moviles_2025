@@ -57,4 +57,9 @@ class TareaViewModel(val repository: TareaRepository): ViewModel() {
     fun eliminarTarea(tarea: Tarea) = viewModelScope.launch{
         repository.eliminarTarea(tarea)
     }
+
+    // En TareaViewModel.kt
+    fun getTareasByMateriaId(materiaId: Int): LiveData<List<Tarea>> {
+        return repository.getTareasByMateriaId(materiaId)
+    }
 }

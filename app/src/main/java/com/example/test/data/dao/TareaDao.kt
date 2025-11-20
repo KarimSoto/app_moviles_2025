@@ -38,4 +38,8 @@ interface TareaDao {
     @Delete
     suspend fun eliminarTarea(tarea: Tarea)
 
+    // En TareaDao.kt
+    @Query("SELECT * FROM tareas WHERE materiaId = :materiaId ORDER BY fechaEntrega ASC")
+    fun getTareasByMateriaId(materiaId: Int): LiveData<List<Tarea>>
+
 }

@@ -34,4 +34,5 @@ interface MateriaDao {
     // 6. Eliminar materia (Mantenemos el nombre original por si se usa en otro lado)
     @Delete
     suspend fun eliminarMateria(materia: Materia)
+
 }
