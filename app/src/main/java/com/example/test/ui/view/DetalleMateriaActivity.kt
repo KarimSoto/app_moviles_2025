@@ -5,7 +5,9 @@ import android.os.Bundle
 import android.view.View
 import android.widget.EditText
 import android.widget.ImageView
+import android.widget.LinearLayout
 import android.widget.TextView
+import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
@@ -27,7 +29,7 @@ class DetalleMateriaActivity : AppCompatActivity() {
     private lateinit var tareaViewModel: TareaViewModel
     private lateinit var tareaAdapter: TareaAdapter
 
-    // Lista completa para filtrar en el buscador sin ir a la BD cada vez
+    // Lista completa para filtrar (Buscador y Botones) sin ir a la BD cada vez
     private var listaCompletaTareas: List<Tarea> = emptyList()
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -50,10 +52,16 @@ class DetalleMateriaActivity : AppCompatActivity() {
         val tituloMateria = findViewById<TextView>(R.id.tituloMateriaDetalle)
         val recyclerTareas = findViewById<RecyclerView>(R.id.recyclerTareasMateria)
         val textSinTareas = findViewById<TextView>(R.id.textSinTareas)
+
+        // Botones y Controles
         val btnRegresar = findViewById<FloatingActionButton>(R.id.buttonRegresarDetalle)
         val btnAgregarTarea = findViewById<FloatingActionButton>(R.id.fabAgregarTareaMateria)
         val inputBusqueda = findViewById<EditText>(R.id.barra_busqueda)
         val botonBuscar = findViewById<ImageView>(R.id.boton_buscar)
+
+        // Filtros de la barra inferior
+        val btnFiltroCompletados = findViewById<LinearLayout>(R.id.btnFiltroCompletados)
+        val btnFiltroPendientes = findViewById<LinearLayout>(R.id.btnFiltroPendientes)
 
         tituloMateria.text = nombreMateriaStr
 
@@ -90,7 +98,7 @@ class DetalleMateriaActivity : AppCompatActivity() {
             }
         }
 
-        // 5. Observar tareas de esta materia
+        // 5. Observar tareas de esta materia (Carga Inicial)
         if (materiaId != -1) {
             tareaViewModel.getTareasByMateriaId(materiaId).observe(this) { listaTareas ->
                 listaCompletaTareas = listaTareas // Guardamos la copia original
@@ -98,29 +106,49 @@ class DetalleMateriaActivity : AppCompatActivity() {
             }
         }
 
-        // 6. Lógica del Buscador
+        // --- LISTENERS Y LÓGICA DE FILTRADO ---
+
+        // A. Buscador
         botonBuscar.setOnClickListener {
             val query = inputBusqueda.text.toString().trim().lowercase()
             if (query.isNotEmpty()) {
-                // Filtramos la lista que ya tenemos en memoria
                 val listaFiltrada = listaCompletaTareas.filter {
                     it.nombreTarea.lowercase().contains(query)
                 }
                 actualizarLista(listaFiltrada)
             } else {
-                // Si está vacío, restauramos la lista original
                 actualizarLista(listaCompletaTareas)
             }
         }
 
-        // 7. Botón Agregar Tarea (+)
+        // B. Filtro: Completados (Barra Inferior)
+        btnFiltroCompletados.setOnClickListener {
+            val completadas = listaCompletaTareas.filter { it.completada }
+            actualizarLista(completadas)
+            Toast.makeText(this, "Mostrando completadas", Toast.LENGTH_SHORT).show()
+        }
+
+        // C. Filtro: Pendientes (Barra Inferior)
+        btnFiltroPendientes.setOnClickListener {
+            val pendientes = listaCompletaTareas.filter { !it.completada }
+            actualizarLista(pendientes)
+            Toast.makeText(this, "Mostrando pendientes", Toast.LENGTH_SHORT).show()
+        }
+
+        // D. Resetear Filtros (Al hacer clic en el título)
+        tituloMateria.setOnClickListener {
+            actualizarLista(listaCompletaTareas)
+            inputBusqueda.text.clear()
+            Toast.makeText(this, "Todas las tareas", Toast.LENGTH_SHORT).show()
+        }
+
+        // E. Agregar Tarea (+)
         btnAgregarTarea.setOnClickListener {
             val intent = Intent(this, AddTaskActivity::class.java)
-            // Podríamos pasar el materiaId aquí si quisieras pre-seleccionar la materia en el futuro
             startActivity(intent)
         }
 
-        // 8. Botón Regresar
+        // F. Regresar
         btnRegresar.setOnClickListener {
             finish()
         }

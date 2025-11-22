@@ -12,6 +12,7 @@ import com.example.test.data.database.DatabaseProvider
 import com.example.test.data.repository.TareaRepository
 import com.example.test.ui.viewModel.TareaViewModel
 import com.example.test.ui.viewModel.TareaViewModelFactory
+import com.google.android.material.floatingactionbutton.FloatingActionButton
 
 class DetalleTareaActivity : AppCompatActivity() {
 
@@ -26,142 +27,118 @@ class DetalleTareaActivity : AppCompatActivity() {
         val factory = TareaViewModelFactory(repository)
         tareaViewModel = ViewModelProvider(this, factory).get(TareaViewModel::class.java)
 
+        // Referencias UI (Nuevos IDs del XML rediseñado)
+        val textTarea = findViewById<TextView>(R.id.nombreTarea)
+        val textFecha = findViewById<TextView>(R.id.fechaEntrega)
+        val textDescripcion = findViewById<TextView>(R.id.descripcion)
+        val textMateria = findViewById<TextView>(R.id.nombreMateria)
+
+        val radioGroupEntrega = findViewById<RadioGroup>(R.id.grupoEntrega)
+        val radioGroupEstado = findViewById<RadioGroup>(R.id.grupoEstado)
+
+        val radioEntregada = findViewById<RadioButton>(R.id.tareaEntregada)
+        val radioNoEntregada = findViewById<RadioButton>(R.id.tareaNoEntregada)
+
         val radioTardio = findViewById<RadioButton>(R.id.radioTardio)
         val radioProceso = findViewById<RadioButton>(R.id.radioProceso)
         val radioCompletado = findViewById<RadioButton>(R.id.radioCompletado)
-        val tareaEntregada = findViewById<RadioButton>(R.id.tareaEntregada)
-        val tareaNoEntregada = findViewById<RadioButton>(R.id.tareaNoEntregada)
 
+        val botonEditar = findViewById<Button>(R.id.botonEditar)
+        val btnRegresar = findViewById<FloatingActionButton>(R.id.buttonRegresar)
+
+        // Obtener datos del Intent
         val id = intent.getIntExtra("id", -1)
         val nombreTarea = intent.getStringExtra("nombreTarea")
         val fechaEntrega = intent.getStringExtra("fechaEntrega")
         val completada = intent.getBooleanExtra("completada", false)
         val materiaId = intent.getIntExtra("materiaId", -1)
+        // Si pasaste descripción en el intent, úsala; si no, placeholder
+        val descripcion = intent.getStringExtra("descripcion") ?: "Sin descripción adicional."
 
-        val textTarea = findViewById<TextView>(R.id.nombreTarea)
-        textTarea.text = "Tarea: $nombreTarea"
+        // Setear textos
+        textTarea.text = nombreTarea
+        textFecha.text = fechaEntrega
+        textDescripcion.text = descripcion
 
-        val textfechaEntrega = findViewById<TextView>(R.id.fechaEntrega)
-        textfechaEntrega.text = "Fecha de entrega: $fechaEntrega"
-
-        val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd")
-        val fechaTarea = LocalDate.parse(fechaEntrega, formatter)
-        val hoy = LocalDate.now()
-
-        if (completada) {
-            tareaEntregada.isChecked = true
-            radioCompletado.isChecked = true
-        } else {
-            tareaNoEntregada.isChecked = true
-            if (fechaTarea.isBefore(hoy)) radioTardio.isChecked = true
-            else radioProceso.isChecked = true
-        }
-
-
-
-
-
-        // Los radios de estado no se pueden editar directamente
-        if(radioCompletado.isChecked) {
-            radioTardio.isEnabled = false
-            radioProceso.isEnabled = false
-        }
-
-        if(radioTardio.isChecked){
-            radioCompletado.isEnabled = false
-            radioProceso.isEnabled = false
-        }
-
-        if(radioProceso.isChecked){
-            radioTardio.isEnabled = false
-            radioCompletado.isEnabled = false
-        }
-
-        // --- Mostrar nombre de materia ---
-        val textnombreMateria = findViewById<TextView>(R.id.nombreMateria)
+        // Obtener nombre de materia
         if (materiaId != -1) {
             tareaViewModel.buscarMateria(materiaId).observe(this) { materia ->
-                textnombreMateria.text = materia.nombreMateria
+                if (materia != null) {
+                    textMateria.text = "Materia: ${materia.nombreMateria}"
+                } else {
+                    textMateria.text = "Materia: Desconocida"
+                }
             }
         }
 
-        // --- Botón editar tarea ---
-        val botonEditarTarea = findViewById<Button>(R.id.botonEditar)
-        botonEditarTarea.setOnClickListener {
+        // Lógica de Fechas
+        val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd")
+        val fechaTareaDate = try {
+            LocalDate.parse(fechaEntrega, formatter)
+        } catch (e: Exception) { LocalDate.now() }
+        val hoy = LocalDate.now()
+
+        // Configurar estado inicial de RadioButtons
+        if (completada) {
+            radioEntregada.isChecked = true
+            radioCompletado.isChecked = true
+        } else {
+            radioNoEntregada.isChecked = true
+            if (fechaTareaDate.isBefore(hoy)) {
+                radioTardio.isChecked = true
+            } else {
+                radioProceso.isChecked = true
+            }
+        }
+
+        // Lógica de bloqueo visual (Si está completado, no dejar cambiar estado manual)
+        fun actualizarBloqueos() {
+            val esCompletado = radioCompletado.isChecked
+            radioTardio.isEnabled = !esCompletado
+            radioProceso.isEnabled = !esCompletado
+        }
+        actualizarBloqueos()
+
+        // --- LISTENERS ---
+
+        // 1. Cambio en "Entregada / No entregada"
+        radioGroupEntrega.setOnCheckedChangeListener { _, checkedId ->
+            if (id != -1) {
+                val nuevoEstado = (checkedId == R.id.tareaEntregada)
+
+                // Actualizar en BD
+                tareaViewModel.cambiarEstadoTarea(id, nuevoEstado)
+
+                // Actualizar UI local
+                if (nuevoEstado) {
+                    radioCompletado.isChecked = true
+                    Toast.makeText(this, "¡Tarea completada!", Toast.LENGTH_SHORT).show()
+                } else {
+                    // Si desmarca entregada, recalculamos si es tardío o proceso
+                    if (fechaTareaDate.isBefore(hoy)) radioTardio.isChecked = true
+                    else radioProceso.isChecked = true
+                    Toast.makeText(this, "Tarea marcada como pendiente", Toast.LENGTH_SHORT).show()
+                }
+                actualizarBloqueos()
+            }
+        }
+
+        // 2. Botón Editar
+        botonEditar.setOnClickListener {
             val intent = Intent(this, EditTaskActivity::class.java)
             intent.putExtra("id", id)
             intent.putExtra("nombreTarea", nombreTarea)
             intent.putExtra("fechaEntrega", fechaEntrega)
-            intent.putExtra("completada", completada)
+            intent.putExtra("completada", radioEntregada.isChecked)
             intent.putExtra("materiaId", materiaId)
             startActivity(intent)
+            // Podríamos llamar finish() si queremos recargar al volver,
+            // pero EditTaskActivity debería manejar el retorno.
         }
 
-        // --- Listeners para cambiar estado ---
-        tareaEntregada.setOnCheckedChangeListener { _, isChecked ->
-            if (id != -1 && isChecked) {
-                tareaViewModel.cambiarEstadoTarea(id, true)
-            }
-        }
-
-        tareaNoEntregada.setOnCheckedChangeListener { _, isChecked ->
-            if (id != -1 && isChecked) {
-                tareaViewModel.cambiarEstadoTarea(id, false)
-            }
-        }
-
-        // --- Observar resultado del cambio ---
-        tareaViewModel.queryExitoso.observe(this) { exito ->
-            // Desactivar listeners mientras se actualiza la interfaz
-            tareaEntregada.setOnCheckedChangeListener(null)
-            tareaNoEntregada.setOnCheckedChangeListener(null)
-
-            radioTardio.isEnabled = true
-            radioCompletado.isEnabled = true
-            radioProceso.isEnabled = true
-
-
-            if (exito) {
-                if (tareaEntregada.isChecked) {
-                    radioCompletado.isChecked = true
-                    Toast.makeText(this, "Tarea entregada", Toast.LENGTH_SHORT).show()
-                } else {
-                    if (fechaTarea.isBefore(hoy)) radioTardio.isChecked = true
-                    else radioProceso.isChecked = true
-                    Toast.makeText(this, "Tarea no entregada", Toast.LENGTH_SHORT).show()
-                }
-            }
-
-            else {
-                // Si falló, revertimos el estado visual
-                tareaEntregada.isChecked = !tareaEntregada.isChecked
-                tareaNoEntregada.isChecked = !tareaNoEntregada.isChecked
-                Toast.makeText(this, "Hubo un error, vuelve a intentarlo", Toast.LENGTH_SHORT).show()
-            }
-
-            if(radioCompletado.isChecked) {
-                radioTardio.isEnabled = false
-                radioProceso.isEnabled = false
-            }
-
-            if(radioTardio.isChecked){
-                radioCompletado.isEnabled = false
-                radioProceso.isEnabled = false
-            }
-
-            if(radioProceso.isChecked){
-                radioTardio.isEnabled = false
-                radioCompletado.isEnabled = false
-            }
-
-            // Restaurar listeners
-            tareaEntregada.setOnCheckedChangeListener { _, isChecked ->
-                if (id != -1 && isChecked) tareaViewModel.cambiarEstadoTarea(id, true)
-            }
-
-            tareaNoEntregada.setOnCheckedChangeListener { _, isChecked ->
-                if (id != -1 && isChecked) tareaViewModel.cambiarEstadoTarea(id, false)
-            }
+        // 3. Botón Regresar
+        btnRegresar.setOnClickListener {
+            finish()
         }
     }
 }

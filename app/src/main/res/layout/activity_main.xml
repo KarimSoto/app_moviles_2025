@@ -252,11 +252,17 @@
         android:clickable="true"
         android:focusable="true"
         app:srcCompat="@android:drawable/ic_input_add"
-        android:contentDescription="Agregar Materia"
         app:backgroundTint="#303F9F"
         app:tint="#FFFFFF"
+
+
         app:borderWidth="0dp"
-        app:elevation="20dp"
+        app:elevation="30dp"
+        app:pressedTranslationZ="30dp"
+        android:translationZ="30dp"
+        android:stateListAnimator="@null"
+
+
         app:fabSize="normal"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
