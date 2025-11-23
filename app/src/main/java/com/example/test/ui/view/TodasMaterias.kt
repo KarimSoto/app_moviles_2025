@@ -4,6 +4,7 @@ import android.content.Intent
 import android.os.Bundle
 import android.widget.*
 import androidx.activity.enableEdgeToEdge
+import androidx.appcompat.app.AlertDialog // Importante para el diálogo de confirmación
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
@@ -47,37 +48,48 @@ class TodasMaterias : AppCompatActivity() {
         val materiaFactory = MateriaViewModelFactory(materiaRepository)
         materiaViewModel = ViewModelProvider(this, materiaFactory).get(MateriaViewModel::class.java)
 
-        // 2. Configurar el NUEVO ADAPTADOR (MateriaListaAdapter)
-        val adapter = MateriaListaAdapter(emptyList()) { materiaClicked ->
-            // Lógica al hacer clic en un elemento de la lista
-            materiaViewModel.updateMateriaInteraction(materiaClicked)
-
-            val intent = Intent(this, DetalleMateriaActivity::class.java)
-            intent.putExtra("nombreMateria", materiaClicked.nombreMateria)
-            intent.putExtra("id", materiaClicked.id)
-            startActivity(intent)
-        }
+        // 2. Configurar Adapter (AHORA CON LOS 3 PARAMETROS REQUERIDOS)
+        val adapter = MateriaAdapter(
+            materias = emptyList(),
+            onItemClick = { materiaClicked ->
+                // Clic Normal: Ir al detalle y actualizar fecha de uso
+                materiaViewModel.updateMateriaInteraction(materiaClicked)
+                val intent = Intent(this, DetalleMateriaActivity::class.java)
+                intent.putExtra("nombreMateria", materiaClicked.nombreMateria)
+                intent.putExtra("id", materiaClicked.id)
+                startActivity(intent)
+            },
+            onEditClick = { materia ->
+                val intent = Intent(this, EditSubjectActivity::class.java)
+                intent.putExtra("id", materia.id)
+                intent.putExtra("nombreMateria", materia.nombreMateria)
+                startActivity(intent)
+            },
+            onDeleteClick = { materia ->
+                // Clic en Eliminar (Desde los 3 puntos): Mostrar Alerta
+                AlertDialog.Builder(this)
+                    .setTitle("Eliminar Materia")
+                    .setMessage("¿Estás seguro de eliminar ${materia.nombreMateria}? Se borrarán todas sus tareas.")
+                    .setPositiveButton("Sí") { _, _ ->
+                        materiaViewModel.eliminarMateria(materia)
+                        Toast.makeText(this, "Materia eliminada", Toast.LENGTH_SHORT).show()
+                    }
+                    .setNegativeButton("No", null)
+                    .show()
+            }
+        )
 
         recyclerMaterias.adapter = adapter
         recyclerMaterias.layoutManager = LinearLayoutManager(this) // Lista vertical
 
         // 3. Observadores
-        // Aquí usamos getAllMaterias (o el liveData general) para ver TODAS
         materiaViewModel.materias.observe(this) { lista ->
             adapter.updateList(lista)
         }
 
         // 4. Botones
-
-        // Botón de Regresar (Abajo)
-        btnRegresar.setOnClickListener {
-            finish()
-        }
-
-        // Botón de Agregar Materia (Arriba a la derecha)
-        btnAgregarTop.setOnClickListener {
-            startActivity(Intent(this, AddSubjectActivity::class.java))
-        }
+        btnRegresar.setOnClickListener { finish() }
+        btnAgregarTop.setOnClickListener { startActivity(Intent(this, AddSubjectActivity::class.java)) }
 
         // 5. Buscador
         lupa.setOnClickListener {

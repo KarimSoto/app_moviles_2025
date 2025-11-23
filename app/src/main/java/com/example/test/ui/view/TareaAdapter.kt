@@ -1,9 +1,10 @@
 package com.example.test.ui.view
 
-import android.content.Intent
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.ImageView
+import android.widget.PopupMenu
 import android.widget.TextView
 import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.RecyclerView
@@ -12,14 +13,20 @@ import com.example.test.data.model.TareaConMateria
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 
-class TareaAdapter(private var tareas: List<TareaConMateria>) :
-    RecyclerView.Adapter<TareaAdapter.TareaViewHolder>() {
+class TareaAdapter(
+    private var tareas: List<TareaConMateria>,
+    // Callbacks opcionales por si solo quieres ver la lista sin acciones en algunos lados
+    private val onItemClick: ((TareaConMateria) -> Unit)? = null,
+    private val onEditClick: ((TareaConMateria) -> Unit)? = null,
+    private val onDeleteClick: ((TareaConMateria) -> Unit)? = null
+) : RecyclerView.Adapter<TareaAdapter.TareaViewHolder>() {
 
     inner class TareaViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         val nombreTarea: TextView = itemView.findViewById(R.id.nombreTarea)
         val fechaEntrega: TextView = itemView.findViewById(R.id.fechaEntrega)
         val materiaNombre: TextView = itemView.findViewById(R.id.materiaNombre)
         val colorBar: View = itemView.findViewById(R.id.colorBar)
+        val btnMoreOptions: ImageView = itemView.findViewById(R.id.btnMoreOptions)
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): TareaViewHolder {
@@ -36,36 +43,47 @@ class TareaAdapter(private var tareas: List<TareaConMateria>) :
         holder.fechaEntrega.text = "Entrega: ${tarea.fechaEntrega}"
         holder.materiaNombre.text = "Materia: ${tarea.materiaNombre}"
 
-        // --- LÓGICA DE COLORES (SEMÁFORO) ---
+        // Lógica de colores (Semáforo)
         val colorRes = try {
             val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd")
             val fechaEntregaDate = LocalDate.parse(tarea.fechaEntrega, formatter)
             val hoy = LocalDate.now()
-
             when {
-                tarea.completada -> R.color.status_completed // VERDE (Completada)
-                fechaEntregaDate.isBefore(hoy) -> R.color.status_late // ROJO (Vencida)
-                else -> R.color.status_pending // NARANJA (Pendiente / A tiempo)
+                tarea.completada -> R.color.status_completed
+                fechaEntregaDate.isBefore(hoy) -> R.color.status_late
+                else -> R.color.status_pending
             }
-        } catch (e: Exception) {
-            // Si la fecha está vacía o tiene formato incorrecto, mostramos naranja por defecto
-            R.color.status_pending
-        }
-
-        // CORRECCIÓN: Usamos setBackgroundColor para asegurar que el cambio se vea
+        } catch (e: Exception) { R.color.status_pending }
         holder.colorBar.setBackgroundColor(ContextCompat.getColor(context, colorRes))
 
-        // -------------------------------------
-
+        // Clic en la tarjeta (Detalles)
         holder.itemView.setOnClickListener {
-            val intent = Intent(context, DetalleTareaActivity::class.java)
-            intent.putExtra("id", tarea.id)
-            intent.putExtra("nombreTarea", tarea.nombreTarea)
-            intent.putExtra("fechaEntrega", tarea.fechaEntrega)
-            intent.putExtra("completada", tarea.completada)
-            intent.putExtra("materiaId", tarea.materiaId)
-            context.startActivity(intent)
+            onItemClick?.invoke(tarea)
         }
+
+        // Clic en los 3 puntitos (Menú)
+        holder.btnMoreOptions.setOnClickListener { view ->
+            showPopupMenu(view, tarea)
+        }
+    }
+
+    private fun showPopupMenu(view: View, tarea: TareaConMateria) {
+        val popup = PopupMenu(view.context, view)
+        popup.inflate(R.menu.menu_opciones) // Usamos el mismo menú que materias
+        popup.setOnMenuItemClickListener { item ->
+            when (item.itemId) {
+                R.id.action_edit -> {
+                    onEditClick?.invoke(tarea)
+                    true
+                }
+                R.id.action_delete -> {
+                    onDeleteClick?.invoke(tarea)
+                    true
+                }
+                else -> false
+            }
+        }
+        popup.show()
     }
 
     override fun getItemCount(): Int = tareas.size

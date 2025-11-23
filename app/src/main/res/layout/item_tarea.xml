@@ -5,73 +5,86 @@
     android:id="@+id/cardTarea"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:layout_margin="8dp"
+    android:layout_marginHorizontal="12dp"
+    android:layout_marginVertical="6dp"
+    app:cardBackgroundColor="#E0E0FF"
     app:cardCornerRadius="16dp"
-    app:cardElevation="4dp"
-    android:backgroundTint="#DAD6FF"
+    app:cardElevation="0dp"
     android:clickable="true"
     android:focusable="true">
 
-    <!-- Contenedor general -->
-    <RelativeLayout
+    <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:padding="12dp">
+        android:paddingVertical="12dp">
 
-        <!-- Franja verde lateral -->
         <View
             android:id="@+id/colorBar"
-            android:layout_width="8dp"
-            android:layout_height="match_parent"
-            android:layout_alignParentStart="true"
-            android:background="#26E836"
-            android:layout_marginEnd="8dp"
-            android:layout_centerVertical="true"
-            android:layout_alignTop="@id/contentLayout"
-            android:layout_alignBottom="@id/contentLayout" />
-
-        <!-- Contenido textual -->
-        <LinearLayout
-            android:id="@+id/contentLayout"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_toEndOf="@id/colorBar"
+            android:layout_width="6dp"
+            android:layout_height="0dp"
             android:layout_marginStart="12dp"
-            android:orientation="vertical">
+            android:layout_marginTop="2dp"
+            android:layout_marginBottom="2dp"
+            android:background="#4CAF50"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+
+        <LinearLayout
+            android:id="@+id/textContainer"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:paddingStart="12dp"
+            android:paddingEnd="8dp"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toStartOf="@+id/btnMoreOptions"
+            app:layout_constraintStart_toEndOf="@+id/colorBar"
+            app:layout_constraintTop_toTopOf="parent">
 
             <TextView
                 android:id="@+id/nombreTarea"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Investigación teoría de la unidad 2"
-                android:textSize="18sp"
+                android:text="Título de la Tarea"
+                android:textColor="#000000"
+                android:textSize="16sp"
                 android:textStyle="bold"
-                android:textColor="@android:color/black"
-                android:layout_marginEnd="40dp" />
+                android:maxLines="1"
+                android:ellipsize="end" />
 
             <TextView
                 android:id="@+id/fechaEntrega"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Entrega: 25/09/2025"
-                android:textSize="14sp"
-                android:textColor="@android:color/black"
-                android:layout_marginTop="4dp" />
+                android:layout_marginTop="4dp"
+                android:text="Entrega: 2025-11-22"
+                android:textColor="#555555"
+                android:textSize="12sp" />
 
             <TextView
                 android:id="@+id/materiaNombre"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Materia: Administración de base de datos"
-                android:textSize="14sp"
-                android:textColor="@android:color/black"
-                android:layout_marginTop="2dp"
-                android:layout_marginBottom="4dp" />
+                android:text="Materia: Matemáticas"
+                android:textColor="#555555"
+                android:textSize="12sp" />
 
         </LinearLayout>
 
+        <ImageView
+            android:id="@+id/btnMoreOptions"
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:layout_marginEnd="12dp"
+            android:src="@drawable/baseline_more_horiz_24"
+            app:tint="#000000"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:clickable="true"
+            android:focusable="true"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
 
-
-    </RelativeLayout>
+    </androidx.constraintlayout.widget.ConstraintLayout>
 
 </androidx.cardview.widget.CardView>

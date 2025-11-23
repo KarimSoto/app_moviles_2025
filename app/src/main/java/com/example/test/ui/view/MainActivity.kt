@@ -4,6 +4,7 @@ import android.content.Intent
 import android.os.Bundle
 import android.widget.*
 import androidx.activity.enableEdgeToEdge
+import androidx.appcompat.app.AlertDialog // Importante para los pop-ups
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
@@ -30,7 +31,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var tareaAdapter: TareaAdapter
     private lateinit var materiaAdapter: MateriaAdapter
 
-    // Variables para guardar los datos actuales y poder combinarlos
+    // Variables para guardar los datos actuales y poder combinarlos/validarlos
     private var currentTareas: List<Tarea> = emptyList()
     private var currentMaterias: List<Materia> = emptyList()
 
@@ -39,37 +40,72 @@ class MainActivity : AppCompatActivity() {
         enableEdgeToEdge()
         setContentView(R.layout.activity_main)
 
-        // --- Initialization (ViewModels, DB, UI Elements, Adapters) ---
-        // (Este bloque es igual que antes, solo lo resumo aquí)
+        // --- Inicialización (ViewModels, DB) ---
         val db = DatabaseProvider.getDatabase(this)
         tareaViewModel = ViewModelProvider(this, TareaViewModelFactory(TareaRepository(db.tareaDao()))).get(TareaViewModel::class.java)
         materiaViewModel = ViewModelProvider(this, MateriaViewModelFactory(MateriaRepository(db.materiaDao()))).get(MateriaViewModel::class.java)
 
+        // --- Configuración RecyclerViews ---
+
+        // 1. Materias (Grid)
         val recyclerMaterias = findViewById<RecyclerView>(R.id.recyclerMaterias)
-        materiaAdapter = MateriaAdapter(emptyList()) { materiaClicked ->
-            materiaViewModel.updateMateriaInteraction(materiaClicked)
-            val intent = Intent(this, DetalleMateriaActivity::class.java)
-            intent.putExtra("nombreMateria", materiaClicked.nombreMateria)
-            intent.putExtra("id", materiaClicked.id)
-            startActivity(intent)
-        }
+        materiaAdapter = MateriaAdapter(
+            materias = emptyList(),
+            onItemClick = { materiaClicked ->
+                materiaViewModel.updateMateriaInteraction(materiaClicked)
+                val intent = Intent(this, DetalleMateriaActivity::class.java)
+                intent.putExtra("nombreMateria", materiaClicked.nombreMateria)
+                intent.putExtra("id", materiaClicked.id)
+                startActivity(intent)
+            },
+            onEditClick = { materia ->
+                val intent = Intent(this, EditSubjectActivity::class.java)
+                intent.putExtra("id", materia.id)
+                intent.putExtra("nombreMateria", materia.nombreMateria)
+                startActivity(intent)
+            },
+            onDeleteClick = { materia ->
+                mostrarConfirmacionBorrarMateria(materia)
+            }
+        )
         recyclerMaterias.adapter = materiaAdapter
         recyclerMaterias.layoutManager = androidx.recyclerview.widget.GridLayoutManager(this, 2)
         recyclerMaterias.isNestedScrollingEnabled = false
 
+        // 2. Tareas (Lista)
         val recyclerTareas = findViewById<RecyclerView>(R.id.recyclerTareas)
-        tareaAdapter = TareaAdapter(emptyList())
+        tareaAdapter = TareaAdapter(
+            tareas = emptyList(),
+            onItemClick = { tarea ->
+                val intent = Intent(this, DetalleTareaActivity::class.java)
+                intent.putExtra("id", tarea.id)
+                intent.putExtra("nombreTarea", tarea.nombreTarea)
+                intent.putExtra("fechaEntrega", tarea.fechaEntrega)
+                intent.putExtra("completada", tarea.completada)
+                intent.putExtra("materiaId", tarea.materiaId)
+                startActivity(intent)
+            },
+            onEditClick = { tarea ->
+                val intent = Intent(this, EditTaskActivity::class.java)
+                intent.putExtra("id", tarea.id)
+                intent.putExtra("nombreTarea", tarea.nombreTarea)
+                intent.putExtra("fechaEntrega", tarea.fechaEntrega)
+                intent.putExtra("completada", tarea.completada)
+                intent.putExtra("materiaId", tarea.materiaId)
+                startActivity(intent)
+            },
+            onDeleteClick = { tarea ->
+                mostrarConfirmacionBorrarTarea(tarea.nombreTarea, tarea.id, tarea.fechaEntrega, tarea.completada, tarea.materiaId)
+            }
+        )
         recyclerTareas.adapter = tareaAdapter
         recyclerTareas.layoutManager = LinearLayoutManager(this)
         recyclerTareas.isNestedScrollingEnabled = false
 
-        // --- Función para combinar Tareas y Materias ---
-        // Esta es la clave de la corrección.
+        // --- Función para combinar listas ---
         fun updateTareasList() {
-            if (currentMaterias.isEmpty()) return // Si no hay materias, no podemos combinar
+            if (currentMaterias.isEmpty()) return
 
-            // Tomamos las tareas (limitadas a 10 si es la vista principal)
-            // Nota: La limitación se aplica antes de llamar a esta función en los casos de búsqueda/filtro
             val listaLimitada = if (currentTareas.size > 10) currentTareas.take(10) else currentTareas
 
             val tareasConMateria = listaLimitada.map { tarea ->
@@ -86,50 +122,61 @@ class MainActivity : AppCompatActivity() {
             tareaAdapter.updateList(tareasConMateria)
         }
 
-        // --- Observadores Corregidos (Independientes) ---
-
-        // 1. Observar Materias Recientes (Grid superior)
+        // --- Observadores ---
         materiaViewModel.recentMaterias.observe(this) { lista ->
             materiaAdapter.updateList(lista)
         }
 
-        // 2. Observar TODAS las Materias (Para poder combinar nombres)
         materiaViewModel.materias.observe(this) { listaMaterias ->
             currentMaterias = listaMaterias
-            updateTareasList() // Intentar actualizar la lista cada vez que lleguen materias
+            updateTareasList()
         }
 
-        // 3. Observar Tareas (Lista inferior)
         tareaViewModel.tareas.observe(this) { listaTareas ->
             currentTareas = listaTareas
-            updateTareasList() // Intentar actualizar la lista cada vez que lleguen tareas
+            updateTareasList()
         }
 
-
-        // --- Lógica de Botones y Búsqueda (Actualizada para usar updateTareasList) ---
+        // --- Elementos UI ---
         val search = findViewById<EditText>(R.id.barra_busqueda)
         val lupa = findViewById<ImageView>(R.id.boton_buscar)
         val home = findViewById<Button>(R.id.home)
         val botonCompletados = findViewById<Button>(R.id.ButtonCompletados)
         val botonPendientes = findViewById<Button>(R.id.ButtonPendientes)
+        val todasMaterias = findViewById<TextView>(R.id.buttonVerTodo)
+        val todasTareas = findViewById<TextView>(R.id.buttonVerTodasTareas)
+
+        // BOTÓN FLOTANTE PRINCIPAL (+)
+        val fabPrincipal = findViewById<FloatingActionButton>(R.id.redireccionarMateria)
+
+        val addTaskButton = findViewById<Button>(R.id.redireccionarTarea)
+
+        // --- Listeners ---
+
+        // 1. Lógica del FAB Central (+)
+        fabPrincipal.setOnClickListener {
+            mostrarDialogoSeleccion()
+        }
+
+        // 2. Otros botones
+        addTaskButton.setOnClickListener {
+            // Este botón pequeño en la tarjeta azul también valida antes de ir
+            validarYRedireccionarTarea()
+        }
 
         lupa.setOnClickListener {
             val textoBusqueda = search.text.toString().trim()
             if (textoBusqueda.isNotEmpty()) {
                 materiaViewModel.buscarMaterias(textoBusqueda).observe(this) { lista -> materiaAdapter.updateList(lista) }
-                // Al buscar, actualizamos currentTareas con el resultado y llamamos a la función
                 tareaViewModel.buscarTareas(textoBusqueda).observe(this) { lista ->
                     currentTareas = lista
                     updateTareasList()
                 }
-            } else {
-                home.performClick() // Si limpian, volver al estado inicial
-            }
+            } else home.performClick()
         }
 
         home.setOnClickListener {
             search.text.clear(); search.clearFocus()
-            // Restaurar observadores originales
             materiaViewModel.recentMaterias.observe(this) { lista -> materiaAdapter.updateList(lista) }
             tareaViewModel.tareas.observe(this) { lista ->
                 currentTareas = lista
@@ -137,36 +184,78 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
-        botonCompletados.setOnClickListener {
-            tareaViewModel.buscarTareasPorEstado(true).observe(this) { lista ->
-                currentTareas = lista
-                updateTareasList()
-            }
-        }
-
-        botonPendientes.setOnClickListener {
-            tareaViewModel.buscarTareasPorEstado(false).observe(this) { lista ->
-                currentTareas = lista
-                updateTareasList()
-            }
-        }
-
-        // --- Navigation Buttons & Insets (Igual que antes) ---
-        // ...
-        val todasMaterias = findViewById<TextView>(R.id.buttonVerTodo)
-        val todasTareas = findViewById<TextView>(R.id.buttonVerTodasTareas)
-        val addSubject = findViewById<FloatingActionButton>(R.id.redireccionarMateria)
-        val addTask = findViewById<Button>(R.id.redireccionarTarea)
+        botonCompletados.setOnClickListener { tareaViewModel.buscarTareasPorEstado(true).observe(this) { l -> currentTareas = l; updateTareasList() } }
+        botonPendientes.setOnClickListener { tareaViewModel.buscarTareasPorEstado(false).observe(this) { l -> currentTareas = l; updateTareasList() } }
 
         todasMaterias.setOnClickListener { startActivity(Intent(this, TodasMaterias::class.java)) }
         todasTareas.setOnClickListener { startActivity(Intent(this, TodasTareas::class.java)) }
-        addTask.setOnClickListener { startActivity(Intent(this, AddTaskActivity::class.java)) }
-        addSubject.setOnClickListener { startActivity(Intent(this, AddSubjectActivity::class.java)) }
 
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main)) { v, insets ->
             val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom)
             insets
         }
+    }
+
+    // --- FUNCIONES AUXILIARES ---
+
+    // 1. Mostrar el menú de "¿Qué deseas agregar?"
+    private fun mostrarDialogoSeleccion() {
+        val opciones = arrayOf("Nueva Materia", "Nueva Tarea")
+
+        AlertDialog.Builder(this)
+            .setTitle("¿Qué deseas agregar?")
+            .setItems(opciones) { _, which ->
+                when (which) {
+                    0 -> { // Nueva Materia
+                        startActivity(Intent(this, AddSubjectActivity::class.java))
+                    }
+                    1 -> { // Nueva Tarea
+                        validarYRedireccionarTarea()
+                    }
+                }
+            }
+            .show()
+    }
+
+    // 2. Validar si hay materias antes de crear tarea
+    private fun validarYRedireccionarTarea() {
+        if (currentMaterias.isEmpty()) {
+            // Mostrar Alerta si no hay materias
+            AlertDialog.Builder(this)
+                .setTitle("¡Atención!")
+                .setMessage("Para crear una tarea, primero necesitas registrar al menos una materia.")
+                .setPositiveButton("Entendido", null)
+                .show()
+        } else {
+            // Si hay materias, vamos al formulario
+            startActivity(Intent(this, AddTaskActivity::class.java))
+        }
+    }
+
+    // 3. Alertas de borrado (copiadas para tener el código limpio en MainActivity)
+    private fun mostrarConfirmacionBorrarMateria(materia: Materia) {
+        AlertDialog.Builder(this)
+            .setTitle("Eliminar Materia")
+            .setMessage("¿Eliminar ${materia.nombreMateria} y todas sus tareas?")
+            .setPositiveButton("Sí") { _, _ ->
+                materiaViewModel.eliminarMateria(materia)
+                Toast.makeText(this, "Materia eliminada", Toast.LENGTH_SHORT).show()
+            }
+            .setNegativeButton("No", null)
+            .show()
+    }
+
+    private fun mostrarConfirmacionBorrarTarea(nombre: String, id: Int, fecha: String, completada: Boolean, materiaId: Int) {
+        AlertDialog.Builder(this)
+            .setTitle("Eliminar Tarea")
+            .setMessage("¿Eliminar '$nombre'?")
+            .setPositiveButton("Sí") { _, _ ->
+                val t = Tarea(id, nombre, fecha, completada, materiaId)
+                tareaViewModel.eliminarTarea(t)
+                Toast.makeText(this, "Tarea eliminada", Toast.LENGTH_SHORT).show()
+            }
+            .setNegativeButton("No", null)
+            .show()
     }
 }
